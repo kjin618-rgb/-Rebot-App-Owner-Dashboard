@@ -62,11 +62,11 @@ export default function PerformanceCard({ metrics }: PerformanceCardProps) {
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-5">
-      <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-        <h4 className="font-semibold text-stone-900 text-base">캠페인 및 매장 핵심 성과 지표</h4>
+    <div className="premium-card p-6 space-y-5">
+      <div className="flex items-center justify-between border-b border-stone-100 pb-3.5">
+        <h4 className="font-bold text-stone-900 text-sm tracking-tight">캠페인 및 매장 핵심 성과 지표</h4>
         {metrics?.incremental_revisit_rate !== null && metrics?.incremental_revisit_rate !== undefined && (
-          <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-lg">
+          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-100/50 px-2.5 py-1 rounded-lg">
             메시지 효과 순증가율: +{metrics.incremental_revisit_rate.toFixed(1)}%p
           </span>
         )}
@@ -76,22 +76,22 @@ export default function PerformanceCard({ metrics }: PerformanceCardProps) {
         {items.map((item, idx) => {
           const Icon = item.icon;
           return (
-            <div key={idx} className="p-4 bg-stone-50/50 hover:bg-stone-50 rounded-xl border border-stone-150 flex flex-col justify-between space-y-3 transition-colors">
-              <div className="space-y-1.5">
+            <div key={idx} className="p-4 bg-stone-50/40 hover:bg-brand-50/20 rounded-xl border border-stone-100 flex flex-col justify-between space-y-4 transition-all duration-300">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center border ${item.color}`}>
-                    <Icon className="w-4 h-4" />
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center border shadow-xs shrink-0 ${item.color}`}>
+                    <Icon className="w-3.5 h-3.5" />
                   </div>
                   <h5 className="font-bold text-stone-800 text-xs truncate" title={item.title}>
                     {item.title}
                   </h5>
                 </div>
-                <p className="text-[10px] text-stone-500 leading-normal line-clamp-2">
+                <p className="text-[10px] text-stone-400 font-medium leading-normal line-clamp-2">
                   {item.desc}
                 </p>
               </div>
 
-              <div className="pt-1">
+              <div className="pt-1 border-t border-stone-100/40">
                 {renderMetricValue(item.value)}
               </div>
             </div>

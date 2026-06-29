@@ -54,37 +54,37 @@ function OwnerLayout() {
   }, [store_code]);
 
   return (
-    <div className="flex bg-stone-50 min-h-screen text-stone-800">
+    <div className="flex bg-[#fdfdfb] min-h-screen text-stone-800">
       {/* Responsive Sidebar */}
       <Sidebar storeName={store?.store_name} />
 
       {/* Main Panel Content Area */}
-      <main className="flex-1 flex flex-col min-h-screen pb-20 md:pb-6">
+      <main className="flex-1 flex flex-col min-h-screen pb-20 md:pb-6 overflow-x-hidden">
         {/* Header Bar */}
-        <header className="h-16 border-b border-stone-200/80 bg-white flex items-center justify-between px-6 shrink-0 sticky top-0 z-40">
+        <header className="h-16 border-b border-stone-200/50 bg-white/85 backdrop-blur-md flex items-center justify-between px-6 shrink-0 sticky top-0 z-40 shadow-[0_1px_12px_rgba(139,115,85,0.02)]">
           <div className="flex items-center gap-3">
-            <div className="md:hidden w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center">
+            <div className="md:hidden w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-500 flex items-center justify-center shadow-md shadow-brand-500/10">
               <Coffee className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-stone-900 text-sm md:text-base leading-tight">
+              <h2 className="font-bold text-stone-900 text-sm leading-tight">
                 {store?.store_name || '리봇 매장'}
               </h2>
-              <p className="text-[10px] md:text-xs text-stone-400 font-mono">
-                Store ID: {store_code}
+              <p className="text-[10px] text-stone-400 font-mono mt-0.5 tracking-wide">
+                STORE ID: {store_code}
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
-            <span className="text-xs text-stone-500 bg-stone-100 border border-stone-200 px-2.5 py-1 rounded-full font-medium">
+            <span className="text-[11px] font-bold text-brand-800 bg-brand-50 border border-brand-100/50 px-3 py-1 rounded-full shadow-xs">
               사장님 모드
             </span>
           </div>
         </header>
 
         {/* Content View Router Outlet Container */}
-        <div className="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+        <div className="flex-1 p-5 md:p-6.5 max-w-7xl w-full mx-auto space-y-6">
           <Outlet />
         </div>
       </main>

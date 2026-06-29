@@ -1,1 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-50: #fdfbf7;
+  --color-brand-100: #f8f4eb;
+  --color-brand-200: #eddcc4;
+  --color-brand-300: #dfc19c;
+  --color-brand-400: #cd9f6f;
+  --color-brand-500: #b57c4c;
+  --color-brand-600: #9a6039;
+  --color-brand-700: #804b30;
+  --color-brand-800: #683c2a;
+  --color-brand-900: #543124;
+  
+  --shadow-premium: 0 4px 20px -2px rgba(120, 110, 90, 0.08), 0 2px 8px -1px rgba(120, 110, 90, 0.04);
+  --shadow-premium-hover: 0 12px 30px -4px rgba(120, 110, 90, 0.12), 0 4px 12px -2px rgba(120, 110, 90, 0.06);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #fcfbfa;
+  color: #2b2621;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom layout scrollbars for that hand-crafted premium feeling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 115, 85, 0.15);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 115, 85, 0.3);
+}
+
+/* Soft transition properties applied to make interactive elements feel heavy, tangible and smooth */
+.interactive-transition {
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.premium-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(139, 115, 85, 0.09);
+  border-radius: 20px;
+  box-shadow: var(--shadow-premium);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.premium-card:hover {
+  box-shadow: var(--shadow-premium-hover);
+  border-color: rgba(139, 115, 85, 0.18);
+}
