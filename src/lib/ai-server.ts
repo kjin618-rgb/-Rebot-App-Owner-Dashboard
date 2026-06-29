@@ -88,7 +88,7 @@ export async function generateAIMessage(
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.0-flash-lite',
           messages: [{ role: 'user', content: prompt }],
         }),
       });
@@ -160,7 +160,7 @@ export async function generateAIPost(
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.0-flash-lite',
           messages: [{ role: 'user', content: prompt }],
           response_format: { type: 'json_object' }
         }),

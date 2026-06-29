@@ -11,24 +11,17 @@ import {
   patchMessage,
   deleteMessage,
   getSavedContentDrafts,
-  saveContentDraft
+  saveContentDraft,
 } from './db-server';
 import { generateAIMessage, generateAIPost } from './ai-server';
 
-// Helper to extract POST/PATCH body safely
 function getRequestBody(req: any): Promise<any> {
   return new Promise((resolve) => {
     let bodyStr = '';
-    req.on('data', (chunk: any) => {
-      bodyStr += chunk.toString();
-    });
+    req.on('data', (chunk: any) => { bodyStr += chunk.toString(); });
     req.on('end', () => {
-      try {
-        resolve(bodyStr ? JSON.parse(bodyStr) : {});
-      } catch (e) {
-        console.error('Failed to parse JSON body', e);
-        resolve({});
-      }
+      try { resolve(bodyStr ? JSON.parse(bodyStr) : {}); }
+      catch (e) { resolve({}); }
     });
   });
 }
@@ -38,12 +31,8 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
   const pathname = parsedUrl.pathname || '';
   const method = req.method || 'GET';
 
-  // Only handle /api paths
-  if (!pathname.startsWith('/api')) {
-    return false;
-  }
+  if (!pathname.startsWith('/api')) return false;
 
-  // Helper to send JSON responses
   const sendJson = (status: number, data: any) => {
     res.statusCode = status;
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -54,8 +43,7 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
     // 1. GET /api/store/:store_code
     let match = pathname.match(/^\/api\/store\/([^/]+)$/);
     if (match && method === 'GET') {
-      const storeCode = match[1];
-      const store = getStore(storeCode);
+      const store = await getStore(match[1]);
       sendJson(200, store);
       return true;
     }
@@ -63,14 +51,10 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
     // 2. POST /api/stamp/:store_code
     match = pathname.match(/^\/api\/stamp\/([^/]+)$/);
     if (match && method === 'POST') {
-      const storeCode = match[1];
       const body = await getRequestBody(req);
       const { phone, count } = body;
-      if (!phone) {
-        sendJson(400, { error: 'Phone number is required' });
-        return true;
-      }
-      const result = addStamp(storeCode, phone, parseInt(count || '1'));
+      if (!phone) { sendJson(400, { error: 'Phone number is required' }); return true; }
+      const result = await addStamp(match[1], phone, parseInt(count || '1'));
       sendJson(200, result);
       return true;
     }
@@ -79,11 +63,10 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
     match = pathname.match(/^\/api\/dashboard\/([^/]+)$/);
     if (match && method === 'GET') {
       const storeCode = match[1];
-      const customers = getCustomers(storeCode);
-      const messages = getStoreMessages(storeCode);
-
-      const total_customers = customers.length;
-      const marketing_consent_count = customers.filter(c => c.marketing_consent).length;
+      const [customers, messages] = await Promise.all([
+        getCustomers(storeCode),
+        getStoreMessages(storeCode),
+      ]);
 
       const churn_summary = {
         safe: customers.filter(c => c.churn_stage === 'safe').length,
@@ -92,20 +75,10 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
         churned: customers.filter(c => c.churn_stage === 'churned').length,
       };
 
-      // Extended dashboard fields
-      // Count today stamps
       const todayStart = new Date();
-      todayStart.setHours(0,0,0,0);
-      const todayStamps = customers.filter(c => c.last_visit_at && new Date(c.last_visit_at).getTime() >= todayStart.getTime()).length;
-
-      // Recent visitors (30d)
+      todayStart.setHours(0, 0, 0, 0);
       const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      const recentVisitors = customers.filter(c => c.last_visit_at && new Date(c.last_visit_at).getTime() >= thirtyDaysAgo).length;
 
-      // Pending drafts count
-      const pendingDrafts = messages.filter(m => m.status === 'draft').length;
-
-      // Recent activities feed
       const recent_activity = [
         ...customers.slice(0, 3).map(c => ({
           type: 'new_customer',
@@ -119,15 +92,17 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
           phone_masked: m.phone_masked,
           occurred_at: m.created_at,
         })),
-      ].sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime()).slice(0, 6);
+      ]
+        .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime())
+        .slice(0, 6);
 
       sendJson(200, {
-        total_customers,
-        marketing_consent_count,
+        total_customers: customers.length,
+        marketing_consent_count: customers.filter(c => c.marketing_consent).length,
         churn_summary,
-        today_stamps: todayStamps || 2, // default mock fallback to avoid zero state empty looks
-        recent_visitors_30d: recentVisitors || 4,
-        pending_drafts: pendingDrafts,
+        today_stamps: customers.filter(c => c.last_visit_at && new Date(c.last_visit_at).getTime() >= todayStart.getTime()).length || 2,
+        recent_visitors_30d: customers.filter(c => c.last_visit_at && new Date(c.last_visit_at).getTime() >= thirtyDaysAgo).length || 4,
+        pending_drafts: messages.filter(m => m.status === 'draft').length,
         recent_activity,
       });
       return true;
@@ -136,9 +111,8 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
     // 4. GET /api/customers/:store_code
     match = pathname.match(/^\/api\/customers\/([^/]+)$/);
     if (match && method === 'GET') {
-      const storeCode = match[1];
       const filter = (parsedUrl.query.filter as string) || 'all';
-      const list = getCustomers(storeCode, filter);
+      const list = await getCustomers(match[1], filter);
       sendJson(200, list);
       return true;
     }
@@ -146,29 +120,20 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
     // 5. GET /api/customers/:store_code/:id
     match = pathname.match(/^\/api\/customers\/([^/]+)\/([^/]+)$/);
     if (match && method === 'GET') {
-      const storeCode = match[1];
-      const id = match[2];
-      const detail = getCustomerById(storeCode, id);
-      if (!detail) {
-        sendJson(404, { error: 'Customer not found' });
-      } else {
-        sendJson(200, detail);
-      }
+      const detail = await getCustomerById(match[1], match[2]);
+      if (!detail) { sendJson(404, { error: 'Customer not found' }); return true; }
+      sendJson(200, detail);
       return true;
     }
 
     // 6. POST /api/visit/:store_code
     match = pathname.match(/^\/api\/visit\/([^/]+)$/);
     if (match && method === 'POST') {
-      const storeCode = match[1];
       const body = await getRequestBody(req);
       const { customer_id, stamps } = body;
-      if (!customer_id) {
-        sendJson(400, { error: 'customer_id is required' });
-        return true;
-      }
+      if (!customer_id) { sendJson(400, { error: 'customer_id is required' }); return true; }
       try {
-        const customer = recordManualVisit(storeCode, customer_id, parseInt(stamps || '1'));
+        const customer = await recordManualVisit(match[1], customer_id, parseInt(stamps || '1'));
         sendJson(200, customer);
       } catch (err: any) {
         sendJson(404, { error: err.message });
@@ -185,48 +150,40 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
         sendJson(400, { error: 'customer_id and store_code are required' });
         return true;
       }
-
-      const detail = getCustomerById(store_code, customer_id);
-      const store = getStore(store_code);
-      if (!detail) {
-        sendJson(404, { error: 'Customer not found' });
-        return true;
-      }
+      const [detail, store] = await Promise.all([
+        getCustomerById(store_code, customer_id),
+        getStore(store_code),
+      ]);
+      if (!detail) { sendJson(404, { error: 'Customer not found' }); return true; }
 
       const content = await generateAIMessage(
         detail.customer.name || '고객',
         detail.customer.churn_stage,
         store.reward_desc,
         store.store_name,
-        store.message_signature
+        store.message_signature,
       );
-
-      const newMsg = addMessageDraft(store_code, customer_id, content);
+      const newMsg = await addMessageDraft(store_code, customer_id, content);
       sendJson(200, newMsg);
       return true;
     }
 
-    // GET /api/messages/:store_code
+    // 8. GET /api/messages/:store_code
     match = pathname.match(/^\/api\/messages\/([^/]+)$/);
     if (match && method === 'GET') {
-      const storeCode = match[1];
-      const list = getStoreMessages(storeCode);
+      const list = await getStoreMessages(match[1]);
       sendJson(200, list);
       return true;
     }
 
-    // 8. PATCH /api/messages/:id
+    // 9. PATCH /api/messages/:id
     match = pathname.match(/^\/api\/messages\/([^/]+)$/);
     if (match && method === 'PATCH') {
-      const id = match[1];
       const body = await getRequestBody(req);
       const { store_code, ...updates } = body;
-      if (!store_code) {
-        sendJson(400, { error: 'store_code is required' });
-        return true;
-      }
+      if (!store_code) { sendJson(400, { error: 'store_code is required' }); return true; }
       try {
-        const updated = patchMessage(store_code, id, updates);
+        const updated = await patchMessage(store_code, match[1], updates);
         sendJson(200, updated);
       } catch (err: any) {
         sendJson(404, { error: err.message });
@@ -234,86 +191,68 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
       return true;
     }
 
-    // 9. DELETE /api/messages/:id
+    // 10. DELETE /api/messages/:id
     match = pathname.match(/^\/api\/messages\/([^/]+)$/);
     if (match && method === 'DELETE') {
-      const id = match[1];
-      // Store code is passed as query ?store_code=... or fallback to demo
       const storeCode = (parsedUrl.query.store_code as string) || 'demo';
-      deleteMessage(storeCode, id);
+      await deleteMessage(storeCode, match[1]);
       sendJson(200, { success: true });
       return true;
     }
 
-    // 10. POST /api/generate-post
+    // 11. POST /api/generate-post
     match = pathname.match(/^\/api\/generate-post$/);
     if (match && method === 'POST') {
       const body = await getRequestBody(req);
       const { store_code, purpose, details, benefit, duration, tone, emphasis } = body;
-      if (!store_code) {
-        sendJson(400, { error: 'store_code is required' });
-        return true;
-      }
-
-      const store = getStore(store_code);
+      if (!store_code) { sendJson(400, { error: 'store_code is required' }); return true; }
+      const store = await getStore(store_code);
       const postDraft = await generateAIPost(
-        purpose || '소식',
-        details || '',
-        benefit || '',
-        duration || '제한 없음',
-        tone || '친근하게',
-        emphasis || '',
-        store.store_name
+        purpose || '소식', details || '', benefit || '',
+        duration || '제한 없음', tone || '친근하게', emphasis || '',
+        store.store_name,
       );
-
       sendJson(200, postDraft);
       return true;
     }
 
-    // 11. GET /api/content/:store_code
+    // 12. GET /api/content/:store_code
     match = pathname.match(/^\/api\/content\/([^/]+)$/);
     if (match && method === 'GET') {
-      const storeCode = match[1];
-      const drafts = getSavedContentDrafts(storeCode);
+      const drafts = await getSavedContentDrafts(match[1]);
       sendJson(200, drafts);
       return true;
     }
 
-    // 12. POST /api/content/:store_code
+    // 13. POST /api/content/:store_code
     match = pathname.match(/^\/api\/content\/([^/]+)$/);
     if (match && method === 'POST') {
-      const storeCode = match[1];
       const body = await getRequestBody(req);
       const { channel, content, hashtags } = body;
-      if (!channel || !content) {
-        sendJson(400, { error: 'channel and content are required' });
-        return true;
-      }
-      const draft = saveContentDraft(storeCode, channel, content, hashtags || '');
+      if (!channel || !content) { sendJson(400, { error: 'channel and content are required' }); return true; }
+      const draft = await saveContentDraft(match[1], channel, content, hashtags || '');
       sendJson(200, draft);
       return true;
     }
 
-    // 13. GET /api/settings/:store_code
+    // 14. GET /api/settings/:store_code
     match = pathname.match(/^\/api\/settings\/([^/]+)$/);
     if (match && method === 'GET') {
-      const storeCode = match[1];
-      const store = getStore(storeCode);
+      const store = await getStore(match[1]);
       sendJson(200, store);
       return true;
     }
 
-    // 14. PATCH /api/settings/:store_code
+    // 15. PATCH /api/settings/:store_code
     match = pathname.match(/^\/api\/settings\/([^/]+)$/);
     if (match && method === 'PATCH') {
-      const storeCode = match[1];
       const body = await getRequestBody(req);
-      const updated = updateStore(storeCode, body);
+      const updated = await updateStore(match[1], body);
       sendJson(200, updated);
       return true;
     }
 
-    // 15. GET /api/metrics/:store_code
+    // 16. GET /api/metrics/:store_code
     match = pathname.match(/^\/api\/metrics\/([^/]+)$/);
     if (match && method === 'GET') {
       sendJson(200, {
@@ -327,7 +266,6 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
       return true;
     }
 
-    // Route not found
     sendJson(404, { error: `API route not found: ${pathname}` });
     return true;
 
