@@ -1,7 +1,17 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/[...route].ts": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/[...route]"
+    },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
