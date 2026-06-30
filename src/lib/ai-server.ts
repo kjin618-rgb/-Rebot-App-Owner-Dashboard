@@ -93,7 +93,7 @@ export async function generateAIMessage(
         }),
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json() as any;
         const text = data.choices?.[0]?.message?.content;
         if (text) return text.trim();
       }
@@ -166,7 +166,7 @@ export async function generateAIPost(
         }),
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json() as any;
         const text = data.choices?.[0]?.message?.content;
         if (text) {
           const result = processJson(text);

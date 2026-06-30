@@ -10,7 +10,7 @@ export async function callOpenRouter(prompt: string): Promise<string> {
   if (!res.ok) {
     throw new Error('Failed to call OpenRouter API');
   }
-  const data = await res.json();
+  const data = await res.json() as any;
   return data.content;
 }
 
