@@ -17,6 +17,11 @@ import { generateAIMessage, generateAIPost } from './ai-server';
 
 function getRequestBody(req: any): Promise<any> {
   return new Promise((resolve) => {
+    // Vercel serverless functions pre-parse JSON bodies into req.body
+    if (req.body !== undefined) {
+      resolve(req.body);
+      return;
+    }
     let bodyStr = '';
     req.on('data', (chunk: any) => { bodyStr += chunk.toString(); });
     req.on('end', () => {
