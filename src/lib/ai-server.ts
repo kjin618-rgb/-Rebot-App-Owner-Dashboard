@@ -1,15 +1,15 @@
-import { GoogleGenAI } from '@google/genai';
 import { buildMessagePrompt, buildPostPrompt } from './prompts';
 import { parseJson } from './openrouter';
 
-// Lazy initialize the Gemini SDK
-let aiClient: GoogleGenAI | null = null;
+// Lazy initialize the Gemini SDK via dynamic import to avoid module-load crash
+let aiClient: any | null = null;
 
-function getGeminiClient(): GoogleGenAI | null {
+async function getGeminiClient(): Promise<any | null> {
   if (!aiClient) {
     const key = process.env.GEMINI_API_KEY;
     if (key && key !== 'MY_GEMINI_API_KEY') {
       try {
+        const { GoogleGenAI } = await import('@google/genai');
         aiClient = new GoogleGenAI({ apiKey: key });
       } catch (e) {
         console.error('Failed to initialize GoogleGenAI client', e);
@@ -103,7 +103,7 @@ export async function generateAIMessage(
   }
 
   // 2. Try native Gemini client
-  const gemini = getGeminiClient();
+  const gemini = await getGeminiClient();
   if (gemini) {
     try {
       const response = await gemini.models.generateContent({
@@ -179,7 +179,7 @@ export async function generateAIPost(
   }
 
   // 2. Try native Gemini client
-  const gemini = getGeminiClient();
+  const gemini = await getGeminiClient();
   if (gemini) {
     try {
       const response = await gemini.models.generateContent({
