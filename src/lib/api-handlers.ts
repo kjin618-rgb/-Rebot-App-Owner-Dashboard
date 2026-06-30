@@ -105,8 +105,8 @@ export async function handleApiRequest(req: any, res: any): Promise<boolean> {
         total_customers: customers.length,
         marketing_consent_count: customers.filter(c => c.marketing_consent).length,
         churn_summary,
-        today_stamps: customers.filter(c => c.last_visit_at && new Date(c.last_visit_at).getTime() >= todayStart.getTime()).length || 2,
-        recent_visitors_30d: customers.filter(c => c.last_visit_at && new Date(c.last_visit_at).getTime() >= thirtyDaysAgo).length || 4,
+        today_stamps: customers.filter(c => c.last_visit_at && new Date(c.last_visit_at).getTime() >= todayStart.getTime()).length,
+        recent_visitors_30d: customers.filter(c => c.last_visit_at && new Date(c.last_visit_at).getTime() >= thirtyDaysAgo).length,
         pending_drafts: messages.filter(m => m.status === 'draft').length,
         recent_activity,
       });

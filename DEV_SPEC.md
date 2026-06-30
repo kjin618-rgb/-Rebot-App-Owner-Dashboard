@@ -1,7 +1,7 @@
 # Rebot 사장님 대시보드 — 개발 명세서
 
 > 마지막 업데이트: 2026-06-30  
-> 현재 상태: **Vercel 배포 디버깅 중** (프론트엔드 정상, API 서버리스 함수 미작동)
+> 현재 상태: **로컬 API 검증 완료** (Supabase 데이터 매장별 조회 정상, Vercel 재배포 필요)
 
 ---
 
@@ -14,7 +14,7 @@
 | 연동 앱 | [고객용 스탬프 앱](https://github.com/kjin618-rgb/Rebot-App-Customer-facing-page) |
 | 공유 DB | Supabase (동일 프로젝트, service_role 키 사용) |
 | 배포 URL | https://rebot-app-owner-dashboard.vercel.app |
-| 개발 단계 | MVP (Phase 1) — 매장 구분 없이 전체 데이터 표시 |
+| 개발 단계 | MVP (Phase 1) — `store_code` 기준 매장별 데이터 표시 |
 
 ---
 
@@ -209,22 +209,25 @@ GEMINI_API_KEY=AIza...          (선택)
 
 ---
 
-## 7. MVP 특이사항 (Phase 1 임시 처리)
+## 7. MVP 데이터 조회 정책
 
-`src/lib/db-server.ts`에서 store_id 필터 제거됨 — 모든 매장 데이터를 한꺼번에 표시:
+`src/lib/db-server.ts`에서 `store_code → stores.id`를 조회한 뒤 `store_id` 기준으로 고객·메시지·콘텐츠 데이터를 필터링한다.
 
 ```typescript
-// TODO Phase 2: .eq('store_id', storeRow.id) 로 매장별 필터 적용
 export async function getCustomers(storeCode: string, ...) {
+  const storeRow = await getStoreRow(storeCode);
   const { data } = await getSupabase()
     .from('customers')
     .select('*')
+    .eq('store_id', storeRow.id)
     .order('created_at', { ascending: false });
-  // store_id 필터 없음 → 전체 조회
 }
 ```
 
-**Phase 2에서 해야 할 일**: `getCustomers`, `getStoreMessages`, `getSavedContentDrafts`에 `.eq('store_id', storeRow.id)` 복원.
+현재 로컬 검증 결과:
+- `cafe-rebot`: 고객 2명
+- `cafe01`: 고객 2명
+- `sweet-bakery`: 고객 1명
 
 ---
 
@@ -241,9 +244,9 @@ export async function getCustomers(storeCode: string, ...) {
 | `@google/genai` 모듈 로드 크래시 | 최상위 static import가 서버리스 번들에서 실패 | `async function` 내 dynamic import로 변경 |
 | `url.parse()` 런타임 에러 가능성 | deprecated API, 번들러 환경에서 불안정 | WHATWG `new URL()` 생성자로 교체 |
 
-### 8-2. 미해결 이슈 — **핵심 블로커**
+### 8-2. 해결 진행 중 이슈 — Vercel 재배포 확인 필요
 
-**증상**: `/api/store/cafe-rebot` 등 API 호출 시 `500: FUNCTION_INVOCATION_FAILED`
+**기존 증상**: `/api/store/cafe-rebot` 등 API 호출 시 `500: FUNCTION_INVOCATION_FAILED`
 
 **근본 원인** (Vercel 런타임 로그에서 확인):
 ```
@@ -257,7 +260,9 @@ imported from /var/task/api/handler.js
 - 컴파일된 `api/handler.js`는 `../src/lib/db-server`를 그대로 참조
 - 배포 환경(`/var/task/`)에는 `src/lib/` 디렉토리가 없음 → 모듈 못 찾음
 - `api/tsconfig.json`에 `"noEmit": false`가 있으면 Vercel이 tsc(번들링 X)를 사용
-- `api/tsconfig.json` 삭제 후 Vercel 자체 esbuild(번들링 O)를 사용하도록 변경 → **마지막 커밋 상태, 미검증**
+- `api/tsconfig.json` 삭제 후 Vercel 자체 esbuild(번들링 O)를 사용하도록 변경
+- `api/handler.ts`가 전체 API 라우터(`handleApiRequest`)를 호출하도록 수정
+- 로컬 검증 완료: `/api/dashboard/cafe-rebot`, `/api/customers/cafe-rebot` 정상 응답
 
 **시도한 접근들**:
 

@@ -3,7 +3,7 @@
 카페·베이커리용 디지털 스탬프 서비스 **리봇(Rebot)**의 사장님 전용 관리 대시보드입니다.  
 고객 스탬프 현황, 이탈 위험 분석, AI 메시지 생성, SNS 콘텐츠 초안 작성을 한 화면에서 처리합니다.
 
-> **배포 상태**: 프론트엔드 정상 · API 서버리스 함수 디버깅 중  
+> **배포 상태**: 로컬 API 검증 완료 · Vercel 재배포 필요  
 > **상세 이력**: [`DEV_SPEC.md`](./DEV_SPEC.md) 참고
 
 ---
@@ -126,14 +126,12 @@ vercel.json             # Vercel 배포 설정
 
 ---
 
-## MVP 제약사항 (Phase 2 예정)
+## MVP 데이터 조회
 
-현재 MVP는 **매장 구분 없이 전체 고객 데이터를 표시**합니다.  
-`db-server.ts`의 `getCustomers`, `getStoreMessages`, `getSavedContentDrafts`에서 `store_id` 필터가 임시 제거된 상태입니다.
+현재 MVP는 `store_code`로 매장을 찾고, 연결된 `store_id` 기준으로 고객·메시지·콘텐츠 데이터를 표시합니다.
 
 Phase 2에서:
 - 매장별 로그인/인증 추가
-- `.eq('store_id', storeRow.id)` 필터 복원
 - 각 사장님이 자기 매장 데이터만 열람 가능하도록 수정
 
 ---

@@ -114,10 +114,13 @@ export async function updateStore(storeCode: string, settings: Partial<Store>): 
 // ─── Customer ─────────────────────────────────────────────────────────────────
 
 export async function getCustomers(storeCode: string, filter: string = 'all'): Promise<Customer[]> {
-  // TODO Phase 2: .eq('store_id', storeRow.id) 로 매장별 필터 적용
+  const storeRow = await getStoreRow(storeCode);
+  if (!storeRow) return [];
+
   const { data } = await getSupabase()
     .from('customers')
     .select('*')
+    .eq('store_id', storeRow.id)
     .order('created_at', { ascending: false });
 
   const customers = (data || []).map(toCustomer);
@@ -131,11 +134,14 @@ export async function getCustomerById(storeCode: string, id: string): Promise<{
   visit_logs: VisitLog[];
   messages: Message[];
 } | null> {
-  // TODO Phase 2: storeRow.id 로 매장 소속 검증 추가
+  const storeRow = await getStoreRow(storeCode);
+  if (!storeRow) return null;
+
   const { data: cRow } = await getSupabase()
     .from('customers')
     .select('*')
     .eq('id', id)
+    .eq('store_id', storeRow.id)
     .single();
 
   if (!cRow) return null;
@@ -146,11 +152,13 @@ export async function getCustomerById(storeCode: string, id: string): Promise<{
       .from('visit_logs')
       .select('*')
       .eq('customer_id', id)
+      .eq('store_id', storeRow.id)
       .order('visited_at', { ascending: false }),
     getSupabase()
       .from('messages')
       .select('*')
       .eq('customer_id', id)
+      .eq('store_id', storeRow.id)
       .order('created_at', { ascending: false }),
   ]);
 
@@ -266,10 +274,13 @@ export async function recordManualVisit(storeCode: string, customerId: string, s
 // ─── Message ──────────────────────────────────────────────────────────────────
 
 export async function getStoreMessages(storeCode: string): Promise<Message[]> {
-  // TODO Phase 2: .eq('store_id', storeRow.id) 로 매장별 필터 적용
+  const storeRow = await getStoreRow(storeCode);
+  if (!storeRow) return [];
+
   const { data } = await getSupabase()
     .from('messages')
     .select('*')
+    .eq('store_id', storeRow.id)
     .order('created_at', { ascending: false });
 
   return (data || []).map(toMessage);
@@ -283,6 +294,7 @@ export async function addMessageDraft(storeCode: string, customerId: string, con
     .from('customers')
     .select('*')
     .eq('id', customerId)
+    .eq('store_id', storeRow.id)
     .single();
   if (!cRow) throw new Error('Customer not found');
 
@@ -352,10 +364,13 @@ export async function deleteMessage(storeCode: string, id: string): Promise<void
 // ─── Content Drafts ───────────────────────────────────────────────────────────
 
 export async function getSavedContentDrafts(storeCode: string): Promise<any[]> {
-  // TODO Phase 2: .eq('store_id', storeRow.id) 로 매장별 필터 적용
+  const storeRow = await getStoreRow(storeCode);
+  if (!storeRow) return [];
+
   const { data } = await getSupabase()
     .from('content_drafts')
     .select('*')
+    .eq('store_id', storeRow.id)
     .order('created_at', { ascending: false });
 
   return data || [];

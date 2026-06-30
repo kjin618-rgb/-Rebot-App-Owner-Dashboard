@@ -1363,8 +1363,8 @@ export default function App() {
           <Route path="settings/:store_code" element={<SettingsPage />} />
         </Route>
 
-        {/* Redirect Root or fallback paths to demo store dashboard */}
-        <Route path="*" element={<Navigate to="/dashboard/demo" replace />} />
+        {/* Redirect root or fallback paths to the sample cafe dashboard. */}
+        <Route path="*" element={<Navigate to="/dashboard/cafe-rebot" replace />} />
       </Routes>
     </BrowserRouter>
   );
