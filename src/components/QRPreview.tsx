@@ -9,8 +9,10 @@ interface QRPreviewProps {
 export default function QRPreview({ storeCode }: QRPreviewProps) {
   const [qrSrc, setQrSrc] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  // Fixed to localhost for local dev/demo scanning (e.g. via adb reverse or same-machine access).
-  const stampUrl = `http://localhost:3000/stamp/${storeCode}`;
+  // Derived from the current origin so this works correctly whether the
+  // dashboard is opened via localhost, a LAN IP (for phone scan testing),
+  // or the deployed production domain.
+  const stampUrl = `${window.location.origin}/stamp/${storeCode}`;
 
   useEffect(() => {
     async function loadQR() {
