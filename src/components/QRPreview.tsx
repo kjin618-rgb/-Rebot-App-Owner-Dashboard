@@ -6,13 +6,13 @@ interface QRPreviewProps {
   storeCode: string;
 }
 
+// Stamp kiosk lives in the separate customer-facing app deployment, not this dashboard.
+const CUSTOMER_APP_BASE_URL = 'https://rebot-app-customer-facing-page.vercel.app';
+
 export default function QRPreview({ storeCode }: QRPreviewProps) {
   const [qrSrc, setQrSrc] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  // Derived from the current origin so this works correctly whether the
-  // dashboard is opened via localhost, a LAN IP (for phone scan testing),
-  // or the deployed production domain.
-  const stampUrl = `${window.location.origin}/stamp/${storeCode}`;
+  const stampUrl = `${CUSTOMER_APP_BASE_URL}/${storeCode}`;
 
   useEffect(() => {
     async function loadQR() {
