@@ -1,3 +1,4 @@
+import QRCode from 'qrcode';
 import { ChurnStage } from '../types';
 
 // Helper to get items from localStorage or fallback
@@ -205,51 +206,17 @@ export async function getPerformanceMetrics(store_code: string): Promise<Perform
 }
 
 // 8. generateQRCode
-// TODO: replace with real QR library
+// Real, scannable QR code encoding the store's stamp URL (SVG for crisp print output)
 export async function generateQRCode(store_code: string): Promise<string> {
-  // Return an SVG data URL for a nice-looking mock QR code
   const url = `${window.location.origin}/stamp/${store_code}`;
-  return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-    <rect width="180" height="180" fill="%23f5f5f4" rx="12"/>
-    <!-- Position indicators -->
-    <rect x="15" y="15" width="40" height="40" fill="%23d97706" rx="4"/>
-    <rect x="23" y="23" width="24" height="24" fill="white" rx="2"/>
-    <rect x="28" y="28" width="14" height="14" fill="%23d97706" rx="1"/>
-    
-    <rect x="125" y="15" width="40" height="40" fill="%23d97706" rx="4"/>
-    <rect x="133" y="133" width="24" height="24" fill="white" rx="2"/>
-    <rect x="138" y="138" width="14" height="14" fill="%23d97706" rx="1"/>
-    
-    <rect x="15" y="125" width="40" height="40" fill="%23d97706" rx="4"/>
-    <rect x="23" y="133" width="24" height="24" fill="white" rx="2"/>
-    <rect x="28" y="138" width="14" height="14" fill="%23d97706" rx="1"/>
-    
-    <rect x="125" y="125" width="40" height="40" fill="%23d97706" rx="4"/>
-
-    <!-- Small random qr dots -->
-    <rect x="65" y="20" width="10" height="10" fill="%2378716c"/>
-    <rect x="85" y="15" width="15" height="10" fill="%2378716c"/>
-    <rect x="70" y="35" width="20" height="10" fill="%23d97706"/>
-    <rect x="105" y="25" width="10" height="20" fill="%2378716c"/>
-    
-    <rect x="20" y="65" width="20" height="10" fill="%2378716c"/>
-    <rect x="15" y="85" width="10" height="15" fill="%23d97706"/>
-    <rect x="35" y="80" width="15" height="15" fill="%2378716c"/>
-    
-    <rect x="65" y="65" width="50" height="50" fill="%23d97706" rx="6"/>
-    <rect x="73" y="73" width="34" height="34" fill="white" rx="4"/>
-    <!-- Small R in middle -->
-    <text x="90" y="96" font-family="system-ui, sans-serif" font-weight="bold" font-size="22" fill="%23d97706" text-anchor="middle">R</text>
-
-    <rect x="125" y="65" width="15" height="15" fill="%2378716c"/>
-    <rect x="145" y="75" width="20" height="10" fill="%2378716c"/>
-    <rect x="130" y="95" width="10" height="20" fill="%23d97706"/>
-    
-    <rect x="65" y="125" width="15" height="15" fill="%2378716c"/>
-    <rect x="85" y="135" width="25" height="10" fill="%2378716c"/>
-    <rect x="70" y="150" width="15" height="15" fill="%23d97706"/>
-    
-    <rect x="125" y="125" width="20" height="10" fill="%2378716c"/>
-    <text x="90" y="172" font-family="system-ui, sans-serif" font-size="7" fill="%2378716c" text-anchor="middle" letter-spacing="1">REBOT CRM</text>
-  </svg>`;
+  const svg = await QRCode.toString(url, {
+    type: 'svg',
+    errorCorrectionLevel: 'H', // high error tolerance for printed/scanned-in-person use
+    margin: 2,
+    color: {
+      dark: '#1c1917',
+      light: '#ffffff',
+    },
+  });
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
