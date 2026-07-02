@@ -206,9 +206,8 @@ export async function getPerformanceMetrics(store_code: string): Promise<Perform
 }
 
 // 8. generateQRCode
-// Real, scannable QR code encoding the store's stamp URL (SVG for crisp print output)
-export async function generateQRCode(store_code: string): Promise<string> {
-  const url = `${window.location.origin}/stamp/${store_code}`;
+// Real, scannable QR code encoding the given URL (SVG for crisp print output)
+export async function generateQRCode(url: string): Promise<string> {
   const svg = await QRCode.toString(url, {
     type: 'svg',
     errorCorrectionLevel: 'H', // high error tolerance for printed/scanned-in-person use

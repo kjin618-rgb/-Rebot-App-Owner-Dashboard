@@ -9,15 +9,16 @@ interface QRPreviewProps {
 export default function QRPreview({ storeCode }: QRPreviewProps) {
   const [qrSrc, setQrSrc] = useState<string>('');
   const [copied, setCopied] = useState(false);
-  const stampUrl = `${window.location.origin}/stamp/${storeCode}`;
+  // Fixed to localhost for local dev/demo scanning (e.g. via adb reverse or same-machine access).
+  const stampUrl = `http://localhost:3000/stamp/${storeCode}`;
 
   useEffect(() => {
     async function loadQR() {
-      const src = await generateQRCode(storeCode);
+      const src = await generateQRCode(stampUrl);
       setQrSrc(src);
     }
     loadQR();
-  }, [storeCode]);
+  }, [stampUrl]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(stampUrl);
@@ -42,7 +43,7 @@ export default function QRPreview({ storeCode }: QRPreviewProps) {
         <h3 className="font-semibold text-stone-900 text-base">매장 비치용 스탬프 적립 QR</h3>
       </div>
 
-      <div className="flex flex-col md:flex-row items-center gap-6">
+      <div className="flex flex-col items-center gap-6">
         {/* QR Code image */}
         <div className="p-3 bg-stone-100 rounded-2xl border border-stone-200/60 shadow-inner shrink-0">
           {qrSrc ? (
@@ -57,24 +58,24 @@ export default function QRPreview({ storeCode }: QRPreviewProps) {
         </div>
 
         {/* Info & links */}
-        <div className="flex-1 space-y-4 w-full">
+        <div className="min-w-0 w-full space-y-4">
           <div className="space-y-1">
             <h4 className="font-bold text-stone-900 text-sm">고객 셀프 적립 QR 코드</h4>
-            <p className="text-xs text-stone-500 leading-normal">
-              이 QR 코드를 카운터, 테이블 등에 출력하여 비치해 주세요. 
+            <p className="text-xs text-stone-500 leading-normal break-words">
+              이 QR 코드를 카운터, 테이블 등에 출력하여 비치해 주세요.
               고객이 스마트폰으로 스캔하면 별도 가입 절차 없이 휴대폰 번호 입력만으로 간편하게 스탬프를 적립할 수 있습니다.
             </p>
           </div>
 
           {/* URL Input Copy */}
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-wide">고객 스탬프 적립 URL</label>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <input
                 type="text"
                 readOnly
                 value={stampUrl}
-                className="flex-1 text-xs font-mono px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none"
+                className="min-w-0 flex-1 text-xs font-mono px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none"
               />
               <button
                 onClick={handleCopyLink}
@@ -89,10 +90,10 @@ export default function QRPreview({ storeCode }: QRPreviewProps) {
           <button
             onClick={handleDownload}
             disabled={!qrSrc}
-            className="w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:bg-stone-300 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Download className="w-4 h-4" />
-            QR 코드 고해상도 이미지 다운로드 (.svg)
+            <Download className="w-4 h-4 shrink-0" />
+            <span className="text-center">QR 코드 고해상도 이미지 다운로드 (.svg)</span>
           </button>
         </div>
       </div>
